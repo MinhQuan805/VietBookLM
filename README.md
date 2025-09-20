@@ -1,3 +1,7 @@
+## 📂 Cấu trúc thư mục
+
+```
+.
 vietbooklm/
 │── frontend/                          # Giao diện web viết bằng Next.js
 │   ├── public/                        # File tĩnh (logo, favicon, fonts, hình ảnh...)
@@ -33,3 +37,4 @@ vietbooklm/
 
 │── README.md                          # Tài liệu giới thiệu dự án
 
+```
