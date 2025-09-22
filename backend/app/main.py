@@ -7,7 +7,7 @@ app = FastAPI()
 class Item(BaseModel):
     name: str
     price: float
-    description: str | None = None
+    description: str
 
 @app.post("/items/")
 async def create_item(item: Item):
