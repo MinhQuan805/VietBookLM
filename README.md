@@ -20,17 +20,17 @@ vietbooklm/
 │   └── .env                           # Biến môi trường cho backend
 
 │── backend/                           # Backend viết bằng FastAPI
-│   ├── app/
-│   │   ├── ai/                        # Tích hợp AI (LangChain pipelines, LangSmith traces,...)
-│   │   ├── api/                       # Định nghĩa API endpoints
-│   │   ├── core/                      # Thành phần cốt lõi
-│   │   │   ├── config.py              # Thiết lập cấu hình cho backend
-│   │   │   ├── security.py            # Xử lý auth (JWT, OAuth2, session)
-│   │   │   └── middleware.py          # Middleware backend (logging, error handler, CORS...)
-│   │   ├── services/                  # Business logic (chat service, document service,...)
-│   │   ├── utils/                     # Hàm tiện ích dùng chung cho backend
-│   │   ├── vectorDB/                  # Tích hợp ChromaDB (lưu embeddings, truy vấn semantic search)
-│   │   └── main.py                    # Điểm vào chính của FastAPI (khởi tạo app, include router)
+│   
+│   ├── ai/                        # Tích hợp AI (LangChain pipelines, LangSmith traces,...)
+│   ├── api/                       # Định nghĩa API endpoints
+│   ├── core/                      # Thành phần cốt lõi
+│   │   ├── config.py              # Thiết lập cấu hình cho backend
+│   │   ├── security.py            # Xử lý auth (JWT, OAuth2, session)
+│   │   └── middleware.py          # Middleware backend (logging, error handler, CORS...)
+│   ├── services/                  # Business logic (chat service, document service,...)
+│   ├── utils/                     # Hàm tiện ích dùng chung cho backend
+│   ├── vectorDB/                  # Tích hợp ChromaDB (lưu embeddings, truy vấn semantic search)
+│   ├── main.py                    # Điểm vào chính của FastAPI (khởi tạo app, include router)
 │   ├── tests/                         # Unit test & integration test
 │   ├── requirements.txt               # Danh sách thư viện Python
 │   └── .env                           # Biến môi trường cho backend
