@@ -1,0 +1,5 @@
+chromadb
+pymongo
+fastapi
+uvicorn
+pydantic
