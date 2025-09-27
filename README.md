@@ -23,13 +23,13 @@ vietbooklm/
 │   
 │   ├── ai/                        # Tích hợp AI (LangChain pipelines, LangSmith traces,...)
 │   ├── routes/                    # Định nghĩa API endpoints
+│   ├── config.py                  # Thiết lập cấu hình cho backend
 │   ├── core/                      # Thành phần cốt lõi
-│   │   ├── config.py              # Thiết lập cấu hình cho backend
 │   │   ├── security.py            # Xử lý auth (JWT, OAuth2, session)
 │   │   └── middleware.py          # Middleware backend (logging, error handler, CORS...)
 │   ├── services/                  # Business logic (chat service, document service,...)
 │   ├── utils/                     # Hàm tiện ích dùng chung cho backend
-│   ├── schemas.py          # Pydantic schemas
+│   ├── schemas/                   # Pydantic schemas
 │   ├── vectorDB/                  # Tích hợp ChromaDB (lưu embeddings, truy vấn semantic search)
 │   ├── main.py                    # Điểm vào chính của FastAPI (khởi tạo app, include router)
 │   ├── tests/                     # Unit test & integration test
