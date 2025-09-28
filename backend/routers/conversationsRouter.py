@@ -15,7 +15,7 @@ router = APIRouter(
 
 # Get all conversations
 @router.get("/", response_model=list[Conversation])
-async def getAll_conversation():
+async def get_all_conversation():
     docs = collection.find({}, {"messages": 0, "deleted": 0})
     print(docs)
     conversations = []

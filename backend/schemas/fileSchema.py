@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
-class FileList(BaseModel):
+class SingleFile(BaseModel):
     file_id: Optional[str] = None
     title: str
     storage_path: Optional[str] = None
@@ -12,6 +12,6 @@ class FileList(BaseModel):
 
 class FileUpload(BaseModel):
     conversation_id: str
-    file_list: List[FileList] = []
+    file_list: List[SingleFile] = []
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime

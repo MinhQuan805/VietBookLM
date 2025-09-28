@@ -1,17 +1,17 @@
 from fastapi import APIRouter, HTTPException
-from schemas.fileSchema import FileUpload, FileList
+from schemas.fileSchema import FileUpload, SingleFile
 from config.database import db
 from datetime import datetime, timezone
 from bson import ObjectId
 
-collection = db["file"]
+collection = db["files"]
 
 router = APIRouter(
-    prefix="/file",
-    tags=["file"]
+    prefix="/files",
+    tags=["files"]
 )
 
-# Get all file uploads
+# Get all files uploads
 @router.get("/", response_model=list[FileUpload])
 async def get_all_files():
     docs = collection.find({})
@@ -20,7 +20,7 @@ async def get_all_files():
         uploads.append(
             FileUpload(
                 conversation_id=str(doc["conversation_id"]),
-                file_list=[FileList(**f) for f in doc["file_list"]],
+                file_list=[SingleFile(**f) for f in doc["file_list"]],
                 created_at=doc["created_at"],
                 updated_at=doc["updated_at"],
             )
@@ -36,7 +36,7 @@ async def get_file(file_id: str):
 
     return FileUpload(
         conversation_id=str(doc["conversation_id"]),
-        file_list=[FileList(**f) for f in doc["file_list"]],
+        file_list=[SingleFile(**f) for f in doc["file_list"]],
         created_at=doc["created_at"],
         updated_at=doc["updated_at"],
     )
@@ -56,14 +56,14 @@ async def create_file(upload: FileUpload):
 
     return FileUpload(
         conversation_id=str(doc["conversation_id"]),
-        file_list=[FileList(**f) for f in doc["file_list"]],
+        file_list=[SingleFile(**f) for f in doc["file_list"]],
         created_at=doc["created_at"],
         updated_at=doc["updated_at"],
     )
 
 # Update file upload (add more files)
 @router.post("/{file_id}", response_model=FileUpload)
-async def update_file(file_id: str, file_item: FileList):
+async def update_file(file_id: str, file_item: SingleFile):
     now = datetime.now(timezone.utc)
     result = collection.update_one(
         {"_id": ObjectId(file_id)},
@@ -77,19 +77,32 @@ async def update_file(file_id: str, file_item: FileList):
         doc = collection.find_one({"_id": ObjectId(file_id)})
         return FileUpload(
             conversation_id=str(doc["conversation_id"]),
-            file_list=[FileList(**f) for f in doc["file_list"]],
+            file_list=[SingleFile(**f) for f in doc["file_list"]],
             created_at=doc["created_at"],
             updated_at=doc["updated_at"],
         )
     else:
         raise HTTPException(status_code=404, detail="File upload not found")
 
-# Delete file upload permanently
-@router.delete("/{file_id}")
-async def delete_file(file_id: str):
-    result = collection.delete_one({"_id": ObjectId(file_id)})
+# Delete single file upload permanently
+@router.delete("/{conversation_id}/{file_id}")
+async def delete_single_file(conversation_id: str, file_id: str):
+    result = collection.update_one(
+        {"conversation_id": conversation_id},
+        {"$pull": {"file_list": {"file_id": file_id}}}
+    )
 
-    if result.deleted_count == 1:
+    if result.modified_count == 1:
         return {"status": True, "message": "File upload deleted permanently"}
     else:
         raise HTTPException(status_code=404, detail="File upload not found")
+
+# Delete all file upload permanently
+@router.delete("/{conversation_id}")
+async def delete_file_conversations(conversation_id: str):
+    result = collection.delete_one({"conversation_id": conversation_id})
+
+    if result.deleted_count == 1:
+        return {"status": True, "message": "Files upload deleted permanently"}
+    else:
+        raise HTTPException(status_code=404, detail="Files upload not found")

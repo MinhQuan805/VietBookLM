@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// ✅ Zod schema
+// Zod schema
 const schema = z.object({
   query: z.string().min(1, "Vui lòng nhập câu hỏi!"),
 });
@@ -16,7 +16,7 @@ const schema = z.object({
 type FieldType = z.infer<typeof schema>;
 
 export default function Page() {
-  // ✅ React Hook Form + Zod
+  // React Hook Form + Zod
   const {
     register,
     handleSubmit,
@@ -26,7 +26,7 @@ export default function Page() {
     resolver: zodResolver(schema),
   });
 
-  // ✅ Submit handler
+  // Submit handler
   const onSubmit = async (values: FieldType) => {
     try {
       const res = await axios.post(
