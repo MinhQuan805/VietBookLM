@@ -1,0 +1,42 @@
+.chat-box {
+  display: flex; 
+  justify-content: center;
+}
+.chat-form {
+  width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #adadad;
+  border-radius: 12px;
+  padding: 0px 8px 8px 5px;
+}
+
+.chat-box.MuiInputBase-root {
+  height: 20px;
+}
+.chat-input .MuiOutlinedInput-notchedOutline {
+  border: none !important;
+}
+
+.chat-input .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.chat-input .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.chat-send.MuiButtonBase-root {
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  background-color: #3b7cff;
+}
+
+.chat-send.MuiButtonBase-root:hover {
+  background-color: #6195fd;
+}
+
+.chat-actions {
+  display: flex;
+  justify-content: flex-end;
+}

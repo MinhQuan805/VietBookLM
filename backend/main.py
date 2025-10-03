@@ -4,8 +4,19 @@ from fastapi import FastAPI
 from routers import conversationsRouter as conversations, filesRouter as files
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from contextlib import asynccontextmanager
+from config.database import db
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    collection = db["conversations"]
+    indexes = await collection.index_information()
+    if "expireAt_1" not in indexes:
+        await collection.create_index("expireAt", expireAfterSeconds=0)
+    yield
+    
 app = FastAPI(
+    lifespan=lifespan,
     title="VietBookLM",
     version="1.0",
     description="Chatbot hỗ trợ học tập",
