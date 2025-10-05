@@ -4,7 +4,6 @@ from config.database import db
 from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from bson.errors import InvalidId
-from typing import Annotated
 
 collection = db["conversations"]
 
@@ -44,6 +43,7 @@ async def get_conversation(session_id: str):
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     return Conversation(
+        title=doc["title"],
         messages=[MessageItem(**m) for m in doc.get("messages", [])],
         created_at=doc["created_at"],
         updated_at=doc["updated_at"],
@@ -56,6 +56,7 @@ async def get_conversation(session_id: str):
 async def create_conversation(message_item: MessageItem):
     now = datetime.now(timezone.utc)
     new_conversation = {
+        "title": "",
         "messages": [message_item.model_dump()],
         "created_at": now,
         "updated_at": now,
@@ -67,6 +68,7 @@ async def create_conversation(message_item: MessageItem):
     doc = await collection.find_one({"_id": result.inserted_id})
 
     return Conversation(
+        title=doc.get("title", ""),
         messages=[MessageItem(**m) for m in doc.get("messages", [])],
         created_at=doc["created_at"],
         updated_at=doc["updated_at"],

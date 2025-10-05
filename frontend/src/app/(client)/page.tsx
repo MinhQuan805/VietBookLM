@@ -1,10 +1,13 @@
-"use client";
+"use client"
 
-import ConversationBox from "./ConversationBox";
+import * as React from "react"
+import CreateNote from "./CreateNote"
 
-export default function MainInterface() {
+export default function Home() {
   return (
-    <ConversationBox>
-    </ConversationBox>
+    <div className="flex items-center justify-center w-full h-screen">
+      <CreateNote/>
+    </div>
   )
 }
+
