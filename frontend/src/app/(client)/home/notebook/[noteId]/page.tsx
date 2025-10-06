@@ -1,7 +1,7 @@
 "use client";
 
 
-export default function MainInterface() {
+export default function Home() {
   return (
     <div>
     </div>

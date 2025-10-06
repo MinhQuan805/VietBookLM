@@ -1,5 +1,5 @@
 chromadb
-pymongo
+motor
 fastapi
 uvicorn
 pydantic

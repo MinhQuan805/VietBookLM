@@ -1,11 +1,11 @@
 'use client'
 
-// Hook Library
+// React hooks
 import { useState, useEffect, type FormEventHandler } from 'react'
 import { useParams } from 'next/navigation'
 
-// shadcn.io/ai
-import { Conversation, ConversationContent, } from "@/components/ui/shadcn-io/ai/conversation"
+// shadcn.io/ai components
+import { Conversation, ConversationContent } from "@/components/ui/shadcn-io/ai/conversation"
 import { Message, MessageContent } from "@/components/ui/shadcn-io/ai/message"
 import { Response } from "@/components/ui/shadcn-io/ai/response"
 import {
@@ -13,12 +13,10 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputToolbar,
-  PromptInputTools,
-} from '@/components/ui/shadcn-io/ai/prompt-input';
+} from '@/components/ui/shadcn-io/ai/prompt-input'
 
-
-// Component
-import AlertError from '@/components/alerts/AlertError';
+// Custom alert component
+import AlertError from '@/components/alerts/AlertError'
 
 // Packages
 import axios from 'axios';
@@ -27,79 +25,89 @@ import { MessageItem } from '@/types/conversation.interface'
 
 export default function ConversationBox() {
 
-  // Lấy params từ môi trường
+  // Get route parameters (noteId and conversationId)
   const params = useParams<{noteId: string; conversationId: string}>();
 
-  // Lấy dữ liệu cuộc hội thoại
+  // State to store all messages of the conversation
   const [messages, setMessages] = useState<MessageItem[]>([])
+  // Fetch conversation messages from API when conversationId changes
   useEffect(() => {
     const fetchData = async () => {
       const convesationData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/conversations/${params.conversationId}`);
       setMessages(convesationData.data.messages);
     }
 
-    fetchData()
-    .catch(console.error)
+    fetchData().catch(console.error)
   }, [params.conversationId])
 
-
-  // Alert
+  // Alert state for error messages
   const [status, setStatus] = useState<'ready' | 'submitted' | 'streaming' | 'error'>('ready');
   const [error, setError] = useState<string | null>(null);
 
-  // Prompt Input Handle
+  // Validation schema for user input using zod
   const schema = z.object({
-    query: z.string().min(1, 'Vui lòng nhập câu hỏi'),
+    query: z.string().min(1, 'Please enter a query'),
   });
+
+  // State for user input text
   const [text, setText] = useState('');
 
+  // Handle form submission
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
 
+    // Validate input
     const result = schema.safeParse({ query: text });
     if (!result.success) {
-      setError('Vui lòng nhập câu hỏi hợp lệ');
+      setError('Please enter a valid query');
       return;
     }
 
     setError(null);
 
-    // Tạo câu hỏi mới
+    // Create a new message object
     const newMessage: MessageItem = {
       id: crypto.randomUUID(),
       role: "user",
-      parts: [{ type: "text", text } ],
+      parts: [{ type: "text", text }],
       timestamp: new Date(),
     };
 
     try {
+      // Set status to streaming for UI feedback
       setTimeout(() => setStatus('streaming'), 100);
+
+      // Send the new message to API
       const res = await axios.patch(
         `${process.env.NEXT_PUBLIC_API_URL}/conversations/${params.conversationId}`,
         newMessage,
         { headers: { 'Content-Type': 'application/json' } }
       );
 
-      console.log('Response:', res.data);
+      // Clear input and reset status
       setText('');
       setStatus('ready');
     } catch (err) {
       console.error('Error posting:', err);
       setStatus('error');
-      setError('Không thể kết nối máy chủ, vui lòng thử lại.');
+      setError('Cannot connect to server, please try again.');
     }
   };
 
-
   return (
     <div className="relative w-full h-screen flex justify-center">
-      {(error) && (
+
+      {/* Display error alerts */}
+      {error && (
         <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
-          {error && <AlertError title="Lỗi" message={error} />}
+          <AlertError title="Error" message={error} />
         </div>
       )}
-      {/* Chat container */}
+
+      {/* Main chat container */}
       <div className="w-full max-w-3xl h-full flex flex-col">
+
+        {/* Conversation messages */}
         <Conversation className="flex-1 overflow-y-auto p-4 pb-32">
           <ConversationContent>
             {messages.map((message) => (
@@ -123,7 +131,7 @@ export default function ConversationBox() {
           </ConversationContent>
         </Conversation>
 
-        {/* Prompt cố định đáy màn hình */}
+        {/* Fixed prompt input at the bottom */}
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-3xl px-4 p-4 flex flex-col gap-4">
           <PromptInput onSubmit={handleSubmit} className="rounded-3xl">
             <PromptInputTextarea

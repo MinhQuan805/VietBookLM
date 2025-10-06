@@ -1,14 +1,20 @@
 "use client"
 
+// React & Next.js
 import * as React from "react"
+import { useRouter } from "next/navigation"
+
+// Icons
 import { LockIcon, Plus } from "lucide-react"
 import { CiStickyNote } from "react-icons/ci"
-import { useRouter } from "next/navigation"
+
+// HTTP & Validation
 import axios from "axios"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { cn } from "@/lib/utils"
+
+// UI Components
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,8 +33,12 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+
+// Custom Components / Alerts
 import AlertError from "@/components/alerts/AlertError"
 
+
+// Main component to center the drawer trigger
 export default function CreateNote() {
   return (
     <div className="flex items-center justify-center w-full h-screen">
@@ -37,44 +47,56 @@ export default function CreateNote() {
   )
 }
 
+// Drawer component with trigger card and modal dialog
 function DrawerResponsive() {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false) // state to control dialog open/close
 
+  // Trigger card for creating a new note
   const triggerCard = (
     <div className="flex flex-col items-center justify-center w-60 h-48 p-8 border border-gray-200 rounded-xl cursor-pointer hover:shadow-md transition-shadow">
       <div className="flex items-center justify-center w-12 h-12 bg-indigo-50 rounded-full">
         <Plus className="w-6 h-6 text-indigo-500" strokeWidth={2.5} />
       </div>
-      <p className="mt-3 font-medium text-gray-700">Tạo sổ ghi chú mới</p>
+      <p className="mt-3 font-medium text-gray-700">Create a new notebook</p>
     </div>
   )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {/* Clicking the card opens the dialog */}
       <DialogTrigger asChild>{triggerCard}</DialogTrigger>
+
+      {/* Dialog content */}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Tạo sổ ghi chú mới</DialogTitle>
+          <DialogTitle>Create a New Notebook</DialogTitle>
           <DialogDescription>
-            Nhập thông tin cho sổ ghi chú của bạn bên dưới.
+            Enter the information for your notebook below.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Form for notebook creation */}
         <NoteForm />
       </DialogContent>
     </Dialog>
   )
 }
 
+// Zod schema for form validation
 const FormSchema = z.object({
-  title: z.string().min(1, { message: "Vui lòng nhập tiêu đề" }),
+  title: z.string().min(1, { message: "Please enter a title" }),
   password: z.string().optional(),
   avatar: z.string().optional(),
 })
 
+// Notebook creation form component
 function NoteForm() {
   const router = useRouter()
+
+  // Error alert state
   const [error, setError] = React.useState<string | null>(null)
 
+  // React Hook Form with Zod validation
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -84,21 +106,25 @@ function NoteForm() {
     },
   })
 
+  // Handle form submission
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
+      // Send POST request to create a new notebook
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notebooks/create`, data)
+
       router.push(`/notebook/${res.data.notebookId}`)
     } catch (err: any) {
       console.error(err)
-      setError("Không thể tạo sổ ghi chú. Vui lòng thử lại sau.")
+      setError("Cannot create notebook. Please try again later.")
     }
   }
 
   return (
     <>
+      {/* Display error alert if any */}
       {error && (
         <div className="fixed top-4 right-4 z-50">
-          <AlertError title="Lỗi" message={error} />
+          <AlertError title="Error" message={error} />
         </div>
       )}
 
@@ -107,18 +133,19 @@ function NoteForm() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="grid items-start gap-6 w-full max-w-sm"
         >
-          {/* TITLE */}
+          {/* Title Field */}
           <FormField
             control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tiêu đề</FormLabel>
+                <FormLabel>Title</FormLabel>
                 <FormControl>
                   <div className="relative">
+                    {/* Icon inside input */}
                     <CiStickyNote className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Nhập tiêu đề"
+                      placeholder="Enter title"
                       className="pl-10"
                       {...field}
                     />
@@ -129,19 +156,19 @@ function NoteForm() {
             )}
           />
 
-          {/* PASSWORD */}
+          {/* Password Field (optional) */}
           <FormField
             control={form.control}
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Mật khẩu (tùy chọn)</FormLabel>
+                <FormLabel>Password (optional)</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <LockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="password"
-                      placeholder="Nhập mật khẩu"
+                      placeholder="Enter password"
                       className="pl-10"
                       {...field}
                     />
@@ -152,17 +179,17 @@ function NoteForm() {
             )}
           />
 
-          {/* AVATAR */}
+          {/* Avatar Field (optional) */}
           <FormField
             control={form.control}
             name="avatar"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ảnh đại diện</FormLabel>
+                <FormLabel>Avatar</FormLabel>
                 <FormControl>
                   <Input
                     type="text"
-                    placeholder="Dán link ảnh hoặc để trống"
+                    placeholder="Paste image URL or leave empty"
                     {...field}
                   />
                 </FormControl>
@@ -171,7 +198,8 @@ function NoteForm() {
             )}
           />
 
-          <Button type="submit">Tạo mới</Button>
+          {/* SUBMIT BUTTON */}
+          <Button type="submit">Create</Button>
         </form>
       </Form>
     </>
