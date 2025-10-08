@@ -3,14 +3,13 @@ from typing import List, Optional, Literal
 from datetime import datetime
 
 class MessagePart(BaseModel):
-    type: Literal["text", "code", "image"]
+    type: Literal["text", "code", "image", "source-url", "reasoning"]
     text: str
 
 class MessageItem(BaseModel):
     id: str
     role: Literal["user", "system", "assistant"]
     parts: List[MessagePart]
-    timestamp: datetime = Field(default_factory=datetime.now)
 
 class Conversation(BaseModel):
     title: str = ''

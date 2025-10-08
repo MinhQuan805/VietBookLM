@@ -3,9 +3,12 @@
 // React hooks
 import { useState, useEffect, type FormEventHandler } from 'react'
 import { useParams } from 'next/navigation'
-
+import { Fragment } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { UIMessage } from '@ai-sdk/react';
+import { DefaultChatTransport, UIMessagePart } from 'ai';
 // shadcn.io/ai components
-import { Conversation, ConversationContent } from "@/components/ui/shadcn-io/ai/conversation"
+import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ui/shadcn-io/ai/conversation"
 import { Message, MessageContent } from "@/components/ui/shadcn-io/ai/message"
 import { Response } from "@/components/ui/shadcn-io/ai/response"
 import {
@@ -14,6 +17,20 @@ import {
   PromptInputTextarea,
   PromptInputToolbar,
 } from '@/components/ui/shadcn-io/ai/prompt-input'
+import {
+  Source,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from '@/components/ui/shadcn-io/ai/source';
+import {
+  Action,
+  Actions
+} from '@/components/ui/shadcn-io/ai/actions';
+import { Reasoning, ReasoningContent, ReasoningTrigger } from '@/components/ui/shadcn-io/ai/reasoning';
+
+// Icon
+import { CopyIcon, Loader, RefreshCcwIcon } from 'lucide-react';
 
 // Custom alert component
 import AlertError from '@/components/alerts/AlertError'
@@ -21,27 +38,38 @@ import AlertError from '@/components/alerts/AlertError'
 // Packages
 import axios from 'axios';
 import * as z from 'zod';
+
+// Interface
 import { MessageItem } from '@/types/conversation.interface'
 
 export default function ConversationBox() {
 
-  // Get route parameters (noteId and conversationId)
   const params = useParams<{noteId: string; conversationId: string}>();
 
   // State to store all messages of the conversation
-  const [messages, setMessages] = useState<MessageItem[]>([])
-  // Fetch conversation messages from API when conversationId changes
+  const { messages, sendMessage, status, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+        // Include all chat messages + conversation ID for backend context
+        body: (messages: UIMessage[]) => ({
+          messages,
+          conversationId: params.conversationId,
+        }),
+    }),
+  });
+
+  // Fetch conversation messages from API
   useEffect(() => {
     const fetchData = async () => {
-      const convesationData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/conversations/${params.conversationId}`);
-      setMessages(convesationData.data.messages);
+      const conversationData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/conversations/${params.conversationId}`)
+      setMessages(conversationData.data.messages);
     }
 
-    fetchData().catch(console.error)
-  }, [params.conversationId])
+    fetchData()
+      .catch(console.error)
+  }, [])
 
   // Alert state for error messages
-  const [status, setStatus] = useState<'ready' | 'submitted' | 'streaming' | 'error'>('ready');
   const [error, setError] = useState<string | null>(null);
 
   // Validation schema for user input using zod
@@ -49,14 +77,12 @@ export default function ConversationBox() {
     query: z.string().min(1, 'Please enter a query'),
   });
 
-  // State for user input text
   const [text, setText] = useState('');
 
   // Handle form submission
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
 
-    // Validate input
     const result = schema.safeParse({ query: text });
     if (!result.success) {
       setError('Please enter a valid query');
@@ -69,14 +95,10 @@ export default function ConversationBox() {
     const newMessage: MessageItem = {
       id: crypto.randomUUID(),
       role: "user",
-      parts: [{ type: "text", text }],
-      timestamp: new Date(),
+      parts: [{ type: "text", text: text}],
     };
 
     try {
-      // Set status to streaming for UI feedback
-      setTimeout(() => setStatus('streaming'), 100);
-
       // Send the new message to API
       const res = await axios.patch(
         `${process.env.NEXT_PUBLIC_API_URL}/conversations/${params.conversationId}`,
@@ -84,12 +106,10 @@ export default function ConversationBox() {
         { headers: { 'Content-Type': 'application/json' } }
       );
 
-      // Clear input and reset status
+      sendMessage({ text: text});
       setText('');
-      setStatus('ready');
     } catch (err) {
       console.error('Error posting:', err);
-      setStatus('error');
       setError('Cannot connect to server, please try again.');
     }
   };
@@ -111,24 +131,78 @@ export default function ConversationBox() {
         <Conversation className="flex-1 overflow-y-auto p-4 pb-32">
           <ConversationContent>
             {messages.map((message) => (
-              <Message from={message.role} key={message.id}>
-                <MessageContent>
-                  {message.parts?.map((part, i) => {
-                    switch (part.type) {
-                      case "text":
-                        return (
-                          <Response key={`${message.id}-${i}`}>
-                            {part.text}
-                          </Response>
-                        );
-                      default:
-                        return null;
-                    }
-                  })}
-                </MessageContent>
-              </Message>
+              <div key={message.id}>
+                {message.role === 'assistant' && message.parts.filter((part) => part.type === 'source-url').length > 0 && (
+                  <Sources>
+                    <SourcesTrigger
+                      count={
+                        message.parts.filter(
+                          (part) => part.type === 'source-url',
+                        ).length
+                      }
+                    />
+                    {message.parts.filter((part) => part.type === 'source-url').map((part, i) => (
+                      <SourcesContent key={`${message.id}-${i}`}>
+                        <Source
+                          key={`${message.id}-${i}`}
+                          href={part.url}
+                          title={part.url}
+                        />
+                      </SourcesContent>
+                    ))}
+                  </Sources>
+                )}
+                {message.parts.map((part, i) => {
+                  switch (part.type) {
+                    case 'text':
+                      return (
+                        <Fragment key={`${message.id}-${i}`}>
+                          <Message from={message.role}>
+                            <MessageContent>
+                              <Response>
+                                {part.text}
+                              </Response>
+                            </MessageContent>
+                          </Message>
+                          {message.role === 'assistant' && i === messages.length - 1 && (
+                            <Actions className="mt-2">
+                              <Action
+                                label="Retry"
+                              >
+                                <RefreshCcwIcon className="size-3" />
+                              </Action>
+                              <Action
+                                onClick={() =>
+                                  navigator.clipboard.writeText(part.text)
+                                }
+                                label="Copy"
+                              >
+                                <CopyIcon className="size-3" />
+                              </Action>
+                            </Actions>
+                          )}
+                        </Fragment>
+                      );
+                    case 'reasoning':
+                      return (
+                        <Reasoning
+                          key={`${message.id}-${i}`}
+                          className="w-full"
+                          isStreaming={status === 'streaming' && i === message.parts.length - 1 && message.id === messages.at(-1)?.id}
+                        >
+                          <ReasoningTrigger />
+                          <ReasoningContent>{part.text}</ReasoningContent>
+                        </Reasoning>
+                      );
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
             ))}
+            {status === 'submitted' && <Loader />}
           </ConversationContent>
+          <ConversationScrollButton />
         </Conversation>
 
         {/* Fixed prompt input at the bottom */}

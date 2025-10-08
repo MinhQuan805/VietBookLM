@@ -87,11 +87,6 @@ async def update_conversation(
     except InvalidId:
         raise HTTPException(status_code=400, detail="Invalid session_id format")
 
-    doc = await collection.find_one({"_id": ObjectId(session_id)}, {"messages": 1})
-    count = len(doc.get("messages", []))
-    if count >= 10:
-        raise HTTPException(status_code=400, detail="Number of conversations exceeded limit")
-
     now = datetime.now(timezone.utc)
     result = await collection.update_one(
         {"_id": obj_id},

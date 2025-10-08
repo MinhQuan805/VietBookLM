@@ -1,7 +1,7 @@
 export type RoleType = "user" | "system" | "assistant";
 
 export interface MessagePart {
-  type: "text" | "code" | "image";
+  type: "text" | "code" | "image" | "source-url" | "reasoning";
   text: string;
 }
 
@@ -9,7 +9,6 @@ export interface MessageItem {
   id: string;
   role: RoleType;
   parts: MessagePart[];
-  timestamp?: Date;
 }
 
 export interface Conversation {
