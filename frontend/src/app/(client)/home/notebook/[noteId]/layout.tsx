@@ -34,7 +34,7 @@ export default function NotebookLayout({ children }: { children: React.ReactNode
         <div className="h-1/2 border border-gray-200 rounded-3xl">
           <FileUpload />
         </div>
-        <div className="h-1/2 border border-gray-200 rounded-3xl">
+        <div className="flex-1 overflow-y-auto h-1/2 border border-gray-200 rounded-3xl">
           <HistoryConversation
             conversations={conversations}
             setConversations={setConversations}

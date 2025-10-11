@@ -42,29 +42,32 @@ export default function HistoryConversation({conversations, setConversations} : 
       router.push(`/home/notebook/${params.noteId}/${newConversation.id}`)
   }
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-3 p-2">
-        <h2 className="font-medium text-gray-800">History</h2>
+    <div className="flex flex-col h-full">
+      {/* Header fixed */}
+      <div className="flex justify-between items-center p-3 mb-2 sticky top-0 bg-white z-10 border-b rounded-3xl">
+        <p className="text-lg font-semibold text-gray-800">History</p>
         <CirclePlus 
           className="text-gray-500 cursor-pointer hover:text-blue-500 transition-colors"
-          size={16}
+          size={22}
           onClick={createConversation}
         />
       </div>
 
-      <div className="flex flex-col space-y-1">
+      {/* Danh sách scroll */}
+      <div className="flex-1 overflow-y-auto space-y-1">
         {conversations.map((item) => (
-          <div
+          <div 
             key={item.id}
             onClick={() => handleClick(item.id)}
             className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition 
               ${selectedId === item.id ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
           >
             <span className="text-gray-700 text-sm">{item.title}</span>
-            <MoreVertical size={16} className="text-gray-500" />
+            <MoreVertical size={20} className="text-gray-500" />
           </div>
         ))}
       </div>
     </div>
+
   )
 }
