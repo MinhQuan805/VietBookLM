@@ -102,7 +102,7 @@ function NoteForm() {
     defaultValues: {
       title: "",
       password: "",
-      avatar: "",
+      avatar: ""
     },
   })
 
@@ -110,9 +110,13 @@ function NoteForm() {
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       // Send POST request to create a new notebook
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notebooks/create`, data)
+      const resNote = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notebooks/create`, data)
 
-      router.push(`/notebook/${res.data.notebookId}`)
+      const resCon = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/conversations/create/${resNote.data.notebookId}`, 
+        {},
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      router.push(`/home/notebook/${resNote.data.notebookId}/${resCon.data.conversationId}`)
     } catch (err: any) {
       console.error(err)
       setError("Cannot create notebook. Please try again later.")

@@ -13,6 +13,7 @@ class MessageItem(BaseModel):
 
 class Conversation(BaseModel):
     title: str = ''
+    notebookId: str = ''
     messages: List[MessageItem]  # Message List
     created_at: datetime
     updated_at: datetime

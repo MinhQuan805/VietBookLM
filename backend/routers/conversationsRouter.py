@@ -4,8 +4,10 @@ from config.database import db
 from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from bson.errors import InvalidId
+from typing import List
 
-collection = db["conversations"]
+conversation_collection = db["conversations"]
+notebook_collection = db["notebooks"]
 
 router = APIRouter(
     prefix="/conversations",
@@ -14,20 +16,17 @@ router = APIRouter(
 
 
 # Get all conversations
-@router.get("/", response_model=list[Conversation])
-async def get_all_conversation():
+@router.get("/getAll/{notebook_id}", response_model=List[dict])
+async def get_all_conversation(notebook_id: str):
     conversations = []
-    cursor = collection.find({}, {"messages": 0, "deleted": 0})
+    cursor = conversation_collection.find(
+        {"notebookId": notebook_id, "deleted": {"$ne": True}},
+        {"messages": 0, "deleted": 0}).sort("updated_at", -1)
     async for doc in cursor:
-        conversations.append(
-            Conversation(
-                messages=[MessageItem(**m) for m in doc.get("messages", [])],
-                created_at=doc["created_at"],
-                updated_at=doc["updated_at"],
-                deleted=doc.get("deleted", False),
-                expireAt=doc.get("expireAt"),
-            )
-        )
+        conversations.append({
+            "id": str(doc["_id"]),
+            "title": doc["title"]
+        })
     return conversations
 
 # Get conversation by session_id
@@ -38,7 +37,7 @@ async def get_conversation(session_id: str):
     except InvalidId:
         raise HTTPException(status_code=400, detail="Invalid session_id format")
 
-    doc = await collection.find_one({"_id": obj_id})
+    doc = await conversation_collection.find_one({"_id": obj_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
@@ -52,29 +51,26 @@ async def get_conversation(session_id: str):
     )
 
 # Create new conversation
-@router.post("/", response_model=Conversation)
-async def create_conversation(message_item: MessageItem):
+@router.post("/create/{notebook_id}")
+async def create_conversation(notebook_id: str):
+    try:
+        notebook_obj_id = ObjectId(notebook_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid notebook_id format")
     now = datetime.now(timezone.utc)
     new_conversation = {
         "title": "",
-        "messages": [message_item.model_dump()],
+        "notebookId": notebook_id,
+        "messages": [],
         "created_at": now,
         "updated_at": now,
         "deleted": False,
         "expireAt": now + timedelta(days=3)
     }
 
-    result = await collection.insert_one(new_conversation)
-    doc = await collection.find_one({"_id": result.inserted_id})
-
-    return Conversation(
-        title=doc.get("title", ""),
-        messages=[MessageItem(**m) for m in doc.get("messages", [])],
-        created_at=doc["created_at"],
-        updated_at=doc["updated_at"],
-        deleted=doc.get("deleted", False),
-        expireAt=doc.get("expireAt"),
-    )
+    result = await conversation_collection.insert_one(new_conversation)
+    conversationId = str(result.inserted_id)
+    return {"conversationId": conversationId}
 
 # Add 1 message into conversation
 @router.patch("/{session_id}", response_model=dict)
@@ -88,7 +84,7 @@ async def update_conversation(
         raise HTTPException(status_code=400, detail="Invalid session_id format")
 
     now = datetime.now(timezone.utc)
-    result = await collection.update_one(
+    result = await conversation_collection.update_one(
         {"_id": obj_id},
         {
             "$push": {"messages": message_item.model_dump()},
@@ -113,7 +109,7 @@ async def delete_conversation(session_id: str):
         raise HTTPException(status_code=400, detail="Invalid session_id format")
 
     now = datetime.now(timezone.utc)
-    result = await collection.update_one(
+    result = await conversation_collection.update_one(
         {"_id": obj_id},
         {
             "$set": {

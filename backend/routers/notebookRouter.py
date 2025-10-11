@@ -3,9 +3,10 @@ from schemas.notebookSchema import Notebook
 from config.database import db
 from datetime import datetime, timezone
 from bson import ObjectId
+from bson.errors import InvalidId
 import bcrypt
 
-collection = db["notebooks"]
+notebook_collection = db["notebooks"]
 
 router = APIRouter(
     prefix="/notebooks",
@@ -16,7 +17,7 @@ router = APIRouter(
 # Get all notebooks
 @router.get("/", response_model=list[Notebook])
 async def get_all_notebooks():
-    docs = collection.find({})
+    docs = notebook_collection.find({})
     notebooks = []
     async for doc in docs:
         notebooks.append(
@@ -24,7 +25,6 @@ async def get_all_notebooks():
                 title=doc["title"],
                 password=doc.get("password", ""),
                 avatar=doc.get("avatar", ""),
-                list_conversations=doc.get("list_conversations"),
                 created_at=doc["created_at"],
                 updated_at=doc.get("updated_at")
             )
@@ -35,7 +35,7 @@ async def get_all_notebooks():
 # Get a single notebook by ID
 @router.get("/{notebook_id}", response_model=Notebook)
 async def get_notebook(notebook_id: str):
-    doc = await collection.find_one({"_id": ObjectId(notebook_id)})
+    doc = await notebook_collection.find_one({"_id": ObjectId(notebook_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Notebook not found")
 
@@ -43,7 +43,6 @@ async def get_notebook(notebook_id: str):
         title=doc["title"],
         password=doc.get("password", ""),
         avatar=doc.get("avatar", ""),
-        list_conversations=doc.get("list_conversations"),
         created_at=doc["created_at"],
         updated_at=doc.get("updated_at")
     )
@@ -61,26 +60,29 @@ async def create_notebook(upload: Notebook):
         data["password"] = hashed_pw.decode("utf-8")
     data.update({"created_at": now, "updated_at": now})
 
-    result = await collection.insert_one(data)
+    result = await notebook_collection.insert_one(data)
     return {"notebookId": str(result.inserted_id)}
 
 
 # Update a notebook
-@router.put("/{notebook_id}", response_model=Notebook)
+@router.patch("/{notebook_id}", response_model=Notebook)
 async def update_notebook(notebook_id: str, upload: Notebook):
+    try:
+        notebook_obj_id = ObjectId(notebook_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid notebook_id format")
     now = datetime.now(timezone.utc)
-    result = await collection.update_one(
-        {"_id": ObjectId(notebook_id)},
+    result = await notebook_collection.update_one(
+        {"_id": notebook_obj_id},
         {"$set": {**upload.model_dump(exclude_unset=True), "updated_at": now}}
     )
 
     if result.modified_count == 1:
-        doc = await collection.find_one({"_id": ObjectId(notebook_id)})
+        doc = await notebook_collection.find_one({"_id": ObjectId(notebook_id)})
         return Notebook(
             title=doc["title"],
             password=doc.get("password", ""),
             avatar=doc.get("avatar", ""),
-            list_conversations=doc.get("list_conversations"),
             created_at=doc["created_at"],
             updated_at=doc.get("updated_at")
         )
@@ -91,8 +93,10 @@ async def update_notebook(notebook_id: str, upload: Notebook):
 # Delete a notebook
 @router.delete("/{notebook_id}")
 async def delete_notebook(notebook_id: str):
-    result = await collection.delete_one({"_id": ObjectId(notebook_id)})
+    result = await notebook_collection.delete_one({"_id": ObjectId(notebook_id)})
     if result.deleted_count == 1:
         return {"status": True, "message": "Notebook deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Notebook not found")
+
+    

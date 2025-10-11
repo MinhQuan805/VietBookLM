@@ -13,6 +13,7 @@ export interface MessageItem {
 
 export interface Conversation {
   title: string;
+  notebookId: string;
   messages: MessageItem[];
   created_at: Date;
   updated_at: Date;

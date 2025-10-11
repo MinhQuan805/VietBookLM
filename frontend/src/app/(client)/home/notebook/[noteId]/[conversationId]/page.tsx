@@ -1,12 +1,5 @@
-"use client";
+import ConversationBox from '@/components/client/notebook/ConversationBox'
 
-import ConversationBox from "./ConversationBox";
-
-export default function Conversation() {
-  return (
-    <div>
-      <ConversationBox>
-      </ConversationBox>
-    </div>
-  )
+export default function ConversationPage() {
+  return <ConversationBox />
 }
