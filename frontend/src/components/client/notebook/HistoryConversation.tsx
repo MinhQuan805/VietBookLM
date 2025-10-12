@@ -27,7 +27,8 @@ export default function HistoryConversation({conversations, setConversations} : 
 
   useEffect(() => {
       setSelectedId(params.conversationId)
-      if (!params.conversationId) {
+      // If no conversationId in URL or it's "1", create a new conversation
+      if (!params.conversationId || params.conversationId === "1") {
         createConversation()
       }
     }, [params.conversationId])
@@ -58,13 +59,15 @@ export default function HistoryConversation({conversations, setConversations} : 
       if (selectedId === id) {
         if (updatedConversations.length > 0) {
           newId = updatedConversations[0].id;
+          setSelectedId(newId);
+          router.replace(`/home/notebook/${params.noteId}/${newId}`);
         }
         else {
-          newId = null;
+          // When no conversation left, create a new one
+          await createConversation();
+          return;
         } 
       }
-      setSelectedId(newId);
-      router.replace(`/home/notebook/${params.noteId}/${newId}`);
 
     } catch (error) {
       console.error("Failed to delete conversation:", error);

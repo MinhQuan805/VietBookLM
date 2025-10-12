@@ -204,7 +204,7 @@ function NoteForm() {
           />
 
           {/* SUBMIT BUTTON */}
-          <Button type="submit">Create</Button>
+          <Button className="cursor-pointer" type="submit">Create</Button>
         </form>
       </Form>
     </>
