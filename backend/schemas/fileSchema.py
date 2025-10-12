@@ -11,7 +11,7 @@ class SingleFile(BaseModel):
     updated_at: Optional[datetime] = None
 
 class FileUpload(BaseModel):
-    conversation_id: str
+    notebook_id: str
     file_list: List[SingleFile] = []
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime

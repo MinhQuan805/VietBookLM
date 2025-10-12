@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import axios from 'axios'
 
-import FileUpload from '@/components/client/notebook/FileUpload'
+import SourceFileUpload from '@/components/client/notebook/SourceFileUpload'
 import HistoryConversation from '@/components/client/notebook/HistoryConversation'
 
 interface Conversation {
@@ -32,7 +32,7 @@ export default function NotebookLayout({ children }: { children: React.ReactNode
       {/* Sidebar */}
       <div className="w-1/4 flex flex-col gap-3">
         <div className="h-1/2 border border-gray-200 rounded-3xl">
-          <FileUpload />
+          <SourceFileUpload />
         </div>
         <div className="flex-1 overflow-y-auto h-1/2 border border-gray-200 rounded-3xl">
           <HistoryConversation

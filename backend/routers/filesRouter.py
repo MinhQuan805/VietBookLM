@@ -18,6 +18,7 @@ router = APIRouter(
 # Upload file
 @router.post("/uploadFiles")
 async def upload_endpoint(files: List[UploadFile] = File(...)):
+    print("Received files:", [file for file in files])
     result = await upload_files(files)
     return {"uploaded_files": result}
 

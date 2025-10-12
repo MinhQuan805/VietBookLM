@@ -59,14 +59,13 @@ export default function HistoryConversation({conversations, setConversations} : 
       if (selectedId === id) {
         if (updatedConversations.length > 0) {
           newId = updatedConversations[0].id;
-          setSelectedId(newId);
-          router.replace(`/home/notebook/${params.noteId}/${newId}`);
         }
         else {
           // When no conversation left, create a new one
-          await createConversation();
-          return;
-        } 
+          newId = "1";
+        }
+        setSelectedId(newId);
+        router.replace(`/home/notebook/${params.noteId}/${newId}`);
       }
 
     } catch (error) {
@@ -101,7 +100,7 @@ export default function HistoryConversation({conversations, setConversations} : 
             }`}
           >
             <span className="text-gray-700 text-sm">{item.title ?? "New chat"}</span>
-              <ActionTrigger className="text-gray-500" apiLink={`conversations`} onDelete={() => handleDelete(item.id)} id={item.id}/>
+            <ActionTrigger className="text-gray-500" apiLink={`conversations`} onDelete={() => handleDelete(item.id)} id={item.id}/>
           </div>
         ))}
       </div>

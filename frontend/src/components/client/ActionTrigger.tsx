@@ -90,7 +90,7 @@ export default function ActionTrigger({ className, apiLink, onDelete, id}: Actio
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <MoreVertical className={className} size={22} />
+          <MoreVertical className={className} size={20} />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-30">
           <DropdownMenuItem
