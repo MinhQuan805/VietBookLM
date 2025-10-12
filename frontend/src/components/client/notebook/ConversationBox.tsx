@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation'
 import { Fragment } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { UIMessage } from '@ai-sdk/react';
-import { DefaultChatTransport, UIMessagePart } from 'ai';
+import { DefaultChatTransport } from 'ai';
 // shadcn.io/ai components
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ui/shadcn-io/ai/conversation"
 import { Message, MessageContent } from "@/components/ui/shadcn-io/ai/message"
@@ -41,12 +41,14 @@ import * as z from 'zod';
 
 // Interface
 import { MessageItem } from '@/types/conversation.interface'
+import { updateTitle } from '@/lib/utils';
 
 export default function ConversationBox() {
 
   const params = useParams<{noteId: string; conversationId: string}>();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(false)
+
 
   // State to store all messages of the conversation
   const { messages, sendMessage, status, setMessages } = useChat({
@@ -56,6 +58,7 @@ export default function ConversationBox() {
         body: (messages: UIMessage[]) => ({
           messages,
           conversationId: params.conversationId,
+          
         }),
     }),
   });
@@ -66,13 +69,13 @@ export default function ConversationBox() {
 
     const fetchData = async () => {
       try {
-        setLoading(true)
-        const conversationData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/conversations/${params.conversationId}`)
-        setMessages(conversationData.data.messages)
-      } catch (err) {
-        console.error(err)
-        setError('Cannot load messages.')
-      } finally {
+        if (params.conversationId) {
+          setLoading(true)
+          const conversationData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/conversations/${params.conversationId}`)
+          setMessages(conversationData.data.messages)
+        }
+      } 
+      finally {
         setLoading(false)
       }
     }
@@ -123,6 +126,10 @@ export default function ConversationBox() {
       );
 
       sendMessage({ text: text});
+      const updatedMessages = [...messages, newMessage];
+      if (updatedMessages.length < 2) {
+        await updateTitle(`conversations/update_title/${params.conversationId}?title=${text.slice(0, 35)}...`);
+      }
       setText('');
     } catch (err) {
       console.error('Error posting:', err);
@@ -175,7 +182,7 @@ export default function ConversationBox() {
                       case 'text':
                         return (
                           <Fragment key={`${message.id}-${i}`}>
-                            <Message from={message.role}>
+                            <Message className="max-w-full" from={message.role}>
                               <MessageContent>
                                 <Response>
                                   {part.text}
@@ -220,7 +227,7 @@ export default function ConversationBox() {
               ))}
               {status === 'submitted' && <Loader />}
             </ConversationContent>
-            <ConversationScrollButton />
+            <ConversationScrollButton/>
             <div ref={messagesEndRef} />
           </Conversation>
         )}

@@ -47,6 +47,7 @@ export default function CreateNote() {
   )
 }
 
+
 // Drawer component with trigger card and modal dialog
 function DrawerResponsive() {
   const [open, setOpen] = React.useState(false) // state to control dialog open/close

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { CirclePlus, MoreVertical } from 'lucide-react'
 import axios from 'axios'
+import ActionTrigger from "@/components/client/ActionTrigger"
 
 interface Conversation {
   id: string
@@ -26,48 +27,81 @@ export default function HistoryConversation({conversations, setConversations} : 
 
   useEffect(() => {
       setSelectedId(params.conversationId)
+      if (!params.conversationId) {
+        createConversation()
+      }
     }, [params.conversationId])
 
   const createConversation = async () => {
     const resCon = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/conversations/create/${params.noteId}`, 
-        {},
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-      const newConversation: Conversation = {
-        id: resCon.data.conversationId,
-        title: resCon.data.title
-      };
-      setConversations([newConversation, ...conversations]);
-      setSelectedId(newConversation.id)
-      router.push(`/home/notebook/${params.noteId}/${newConversation.id}`)
+      {},
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    const newConversation: Conversation = {
+      id: resCon.data.conversationId,
+      title: resCon.data.title
+    };
+    setConversations([newConversation, ...conversations]);
+    setSelectedId(newConversation.id)
+    router.push(`/home/notebook/${params.noteId}/${newConversation.id}`)
   }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/conversations/delete/${id}`);
+      
+      // Filter remained conversation 
+      const updatedConversations = conversations.filter(c => c.id !== id);
+      setConversations(updatedConversations);
+
+      var newId = selectedId
+      if (selectedId === id) {
+        if (updatedConversations.length > 0) {
+          newId = updatedConversations[0].id;
+        }
+        else {
+          newId = null;
+        } 
+      }
+      setSelectedId(newId);
+      router.replace(`/home/notebook/${params.noteId}/${newId}`);
+
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
+    }
+  };
+
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header fixed */}
+      {/* Header */}
       <div className="flex justify-between items-center p-3 mb-2 sticky top-0 bg-white z-10 border-b rounded-3xl">
         <p className="text-lg font-semibold text-gray-800">History</p>
-        <CirclePlus 
+        <CirclePlus
           className="text-gray-500 cursor-pointer hover:text-blue-500 transition-colors"
           size={22}
           onClick={createConversation}
         />
       </div>
 
-      {/* Danh sách scroll */}
-      <div className="flex-1 overflow-y-auto space-y-1">
-        {conversations.map((item) => (
-          <div 
+      {/* Conversation list */}
+      <div
+        className="flex-1 overflow-y-auto space-y-1 p-3"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {conversations.map(item => (
+          <div
             key={item.id}
             onClick={() => handleClick(item.id)}
-            className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition 
-              ${selectedId === item.id ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+            className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition ${
+              selectedId === item.id ? 'bg-gray-100' : 'hover:bg-gray-50'
+            }`}
           >
-            <span className="text-gray-700 text-sm">{item.title}</span>
-            <MoreVertical size={20} className="text-gray-500" />
+            <span className="text-gray-700 text-sm">{item.title ?? "New chat"}</span>
+              <ActionTrigger className="text-gray-500" apiLink={`conversations`} onDelete={() => handleDelete(item.id)} id={item.id}/>
           </div>
         ))}
       </div>
     </div>
-
   )
 }

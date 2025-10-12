@@ -43,7 +43,7 @@ export default function NotebookLayout({ children }: { children: React.ReactNode
       </div>
 
       {/* Main conversation box */}
-      <div className="flex-1">{children}</div>
+      <div className="flex-1 w-1/2">{children}</div>
 
       <div className="w-1/4 bg-gray-50 rounded-xl" />
     </div>

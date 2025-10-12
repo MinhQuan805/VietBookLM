@@ -59,7 +59,7 @@ async def create_conversation(notebook_id: str):
         raise HTTPException(status_code=400, detail="Invalid notebook_id format")
     now = datetime.now(timezone.utc)
     new_conversation = {
-        "title": "",
+        "title": "New chat",
         "notebookId": notebook_id,
         "messages": [],
         "created_at": now,
@@ -71,6 +71,28 @@ async def create_conversation(notebook_id: str):
     result = await conversation_collection.insert_one(new_conversation)
     conversationId = str(result.inserted_id)
     return {"conversationId": conversationId}
+
+# Update title of conversation
+@router.patch("/update_title/{session_id}")
+async def update_title(session_id: str, title: str):
+    try:
+        session_obj_id = ObjectId(session_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid session_id format")
+    
+    result = await conversation_collection.update_one(
+        {"_id": session_obj_id},
+        {
+            "$set": {
+                "title": title
+            }
+        }
+    )
+
+    if result.modified_count == 1:
+        return
+    else:
+        raise HTTPException(status_code=404, detail="Conversation not found")
 
 # Add 1 message into conversation
 @router.patch("/{session_id}", response_model=dict)
