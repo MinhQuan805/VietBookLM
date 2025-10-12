@@ -33,6 +33,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Spinner } from '@/components/ui/shadcn-io/spinner/index';
 
 // Custom Components / Alerts
 import AlertError from "@/components/alerts/AlertError"
@@ -93,6 +94,7 @@ const FormSchema = z.object({
 // Notebook creation form component
 function NoteForm() {
   const router = useRouter()
+  const [loading, setLoading] = React.useState(false)
 
   // Error alert state
   const [error, setError] = React.useState<string | null>(null)
@@ -109,6 +111,7 @@ function NoteForm() {
 
   // Handle form submission
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    setLoading(true)
     try {
       // Send POST request to create a new notebook
       const resNote = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notebooks/create`, data)
@@ -121,6 +124,8 @@ function NoteForm() {
     } catch (err: any) {
       console.error(err)
       setError("Cannot create notebook. Please try again later.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -204,7 +209,16 @@ function NoteForm() {
           />
 
           {/* SUBMIT BUTTON */}
-          <Button className="cursor-pointer" type="submit">Create</Button>
+          <Button type="submit" disabled={loading} className="flex items-center justify-center gap-2 cursor-pointer">
+            {loading ? (
+              <>
+                <Spinner variant="ring" className="w-4 h-4 animate-spin text-white" />
+                Creating...
+              </>
+            ) : (
+              "Create"
+            )}
+          </Button>
         </form>
       </Form>
     </>

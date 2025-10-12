@@ -6,3 +6,5 @@ pydantic
 bson
 python-dotenv
 bcrypt
+cloudinary
+python-multipart

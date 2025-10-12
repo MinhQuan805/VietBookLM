@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from schemas.fileSchema import FileUpload, SingleFile
 from config.database import db
 from datetime import datetime, timezone
 from bson import ObjectId
 from bson.errors import InvalidId
 from typing import Annotated
+from typing import List
+from libs.cloudinary import upload_files
 
 collection = db["files"]
 
@@ -12,6 +14,12 @@ router = APIRouter(
     prefix="/files",
     tags=["files"]
 )
+
+# Upload file
+@router.post("/uploadFiles")
+async def upload_endpoint(files: List[UploadFile] = File(...)):
+    result = await upload_files(files)
+    return {"uploaded_files": result}
 
 # Get all files uploads
 @router.get("/", response_model=list[FileUpload])
@@ -21,7 +29,7 @@ async def get_all_files():
     async for doc in cursor:
         uploads.append(
             FileUpload(
-                conversation_id=str(doc["conversation_id"]),
+                notebook_id=str(doc["notebook_id"]),
                 file_list=[SingleFile(**f) for f in doc["file_list"]],
                 created_at=doc["created_at"],
                 updated_at=doc["updated_at"],
@@ -42,7 +50,7 @@ async def get_file(file_id: str):
         raise HTTPException(status_code=404, detail="File upload not found")
 
     return FileUpload(
-        conversation_id=str(doc["conversation_id"]),
+        notebook_id=str(doc["notebook_id"]),
         file_list=[SingleFile(**f) for f in doc["file_list"]],
         created_at=doc["created_at"],
         updated_at=doc["updated_at"],
@@ -62,7 +70,7 @@ async def create_file(upload: FileUpload):
     doc = await collection.find_one({"_id": result.inserted_id})
 
     return FileUpload(
-        conversation_id=str(doc["conversation_id"]),
+        notebook_id=str(doc["notebook_id"]),
         file_list=[SingleFile(**f) for f in doc["file_list"]],
         created_at=doc["created_at"],
         updated_at=doc["updated_at"],
@@ -94,7 +102,7 @@ async def update_file(file_id: str, file_item: SingleFile):
     if result.modified_count == 1:
         doc = await collection.find_one({"_id": obj_id})
         return FileUpload(
-            conversation_id=str(doc["conversation_id"]),
+            notebook_id=str(doc["notebook_id"]),
             file_list=[SingleFile(**f) for f in doc["file_list"]],
             created_at=doc["created_at"],
             updated_at=doc["updated_at"],
@@ -103,10 +111,10 @@ async def update_file(file_id: str, file_item: SingleFile):
         raise HTTPException(status_code=404, detail="File upload not found")
 
 # Delete single file upload permanently
-@router.delete("/{conversation_id}/{file_id}")
-async def delete_single_file(conversation_id: str, file_id: str):
+@router.delete("/{notebook_id}/{file_id}")
+async def delete_single_file(notebook_id: str, file_id: str):
     result = await collection.update_one(
-        {"conversation_id": conversation_id},
+        {"notebook_id": notebook_id},
         {"$pull": {"file_list": {"file_id": file_id}}}
     )
 
@@ -116,9 +124,9 @@ async def delete_single_file(conversation_id: str, file_id: str):
         raise HTTPException(status_code=404, detail="File upload not found")
 
 # Delete all file upload permanently
-@router.delete("/{conversation_id}")
-async def delete_file_conversations(conversation_id: str):
-    result = await collection.delete_one({"conversation_id": conversation_id})
+@router.delete("/{notebook_id}")
+async def delete_file_conversations(notebook_id: str):
+    result = await collection.delete_one({"notebook_id": notebook_id})
 
     if result.deleted_count == 1:
         return {"status": True, "message": "Files upload deleted permanently"}

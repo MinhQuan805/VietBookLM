@@ -42,6 +42,7 @@ import * as z from 'zod';
 // Interface
 import { MessageItem } from '@/types/conversation.interface'
 import { updateTitle } from '@/lib/utils';
+import { Spinner } from '@/components/ui/shadcn-io/spinner/index';
 
 export default function ConversationBox() {
 
@@ -150,7 +151,7 @@ export default function ConversationBox() {
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-28">
         {loading ? (
           <div className="flex justify-center items-center h-full">
-            <Loader className="animate-spin w-8 h-8 text-gray-500" />
+            <Spinner variant="ring" key="ring"/>
           </div>
         ) : (
           <Conversation>
