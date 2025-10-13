@@ -16,11 +16,11 @@ router = APIRouter(
 
 
 # Get all conversations
-@router.get("/getAll/{notebook_id}", response_model=List[dict])
-async def get_all_conversation(notebook_id: str):
+@router.get("/getAll/{notebookId}", response_model=List[dict])
+async def get_all_conversation(notebookId: str):
     conversations = []
     cursor = conversation_collection.find(
-        {"notebookId": notebook_id, "deleted": {"$ne": True}},
+        {"notebookId": notebookId, "deleted": {"$ne": True}},
         {"messages": 0, "deleted": 0}).sort("updated_at", -1)
     async for doc in cursor:
         conversations.append({
@@ -51,16 +51,16 @@ async def get_conversation(session_id: str):
     )
 
 # Create new conversation
-@router.post("/create/{notebook_id}")
-async def create_conversation(notebook_id: str):
+@router.post("/create/{notebookId}")
+async def create_conversation(notebookId: str):
     try:
-        notebook_obj_id = ObjectId(notebook_id)
+        notebook_obj_id = ObjectId(notebookId)
     except InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid notebook_id format")
+        raise HTTPException(status_code=400, detail="Invalid notebookId format")
     now = datetime.now(timezone.utc)
     new_conversation = {
         "title": "New chat",
-        "notebookId": notebook_id,
+        "notebookId": notebookId,
         "messages": [],
         "created_at": now,
         "updated_at": now,

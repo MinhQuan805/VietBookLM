@@ -4,6 +4,7 @@ from cloudinary.uploader import upload
 from fastapi import UploadFile, HTTPException, status
 from typing import List
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
 # Load biến môi trường
 load_dotenv()
@@ -18,8 +19,8 @@ cloudinary.config(
 
 # Hàm upload nhiều file
 async def upload_files(files: List[UploadFile]):
-    uploaded_urls = []
-
+    uploaded = []
+    now = datetime.now(timezone.utc)
     try:
         for file in files:
             upload_result = upload(
@@ -28,15 +29,17 @@ async def upload_files(files: List[UploadFile]):
                 resource_type="auto"
             )
 
-            uploaded_urls.append({
+            uploaded.append({
+                "public_id": upload_result.get("public_id"),
                 "filename": file.filename,
                 "url": upload_result.get("secure_url"),
-                "public_id": upload_result.get("public_id"),
                 "format": upload_result.get("format"),
-                "bytes": upload_result.get("bytes")
+                "bytes": str(upload_result.get("bytes")),
+                "created_at": now,
+                "updated_at": now,
             })
 
-        return uploaded_urls
+        return uploaded
 
     except Exception as e:
         raise HTTPException(

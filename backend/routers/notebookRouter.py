@@ -5,9 +5,11 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from bson.errors import InvalidId
 import bcrypt
+from routers.conversationsRouter import create_conversation
+from routers.filesRouter import create_file_storage
 
 notebook_collection = db["notebooks"]
-
+file_collection = db["files"]
 router = APIRouter(
     prefix="/notebooks",
     tags=["notebooks"]
@@ -33,9 +35,9 @@ async def get_all_notebooks():
 
 
 # Get a single notebook by ID
-@router.get("/{notebook_id}", response_model=Notebook)
-async def get_notebook(notebook_id: str):
-    doc = await notebook_collection.find_one({"_id": ObjectId(notebook_id)})
+@router.get("/{notebookId}", response_model=Notebook)
+async def get_notebook(notebookId: str):
+    doc = await notebook_collection.find_one({"_id": ObjectId(notebookId)})
     if not doc:
         raise HTTPException(status_code=404, detail="Notebook not found")
 
@@ -61,16 +63,23 @@ async def create_notebook(upload: Notebook):
     data.update({"created_at": now, "updated_at": now})
 
     result = await notebook_collection.insert_one(data)
-    return {"notebookId": str(result.inserted_id)}
+
+    notebookId = str(result.inserted_id)
+    # Create new conversation for new notebook
+    conversation = await create_conversation(notebookId)
+
+    # Create new file storage for new notebook
+    fileStorage = await create_file_storage(notebookId)
+    return {"notebookId": notebookId, "conversationId": conversation["conversationId"], "fileStorageId": fileStorage["fileStorageId"]}
 
 
 # Update a notebook
-@router.patch("/{notebook_id}", response_model=Notebook)
-async def update_notebook(notebook_id: str, upload: Notebook):
+@router.patch("/{notebookId}", response_model=Notebook)
+async def update_notebook(notebookId: str, upload: Notebook):
     try:
-        notebook_obj_id = ObjectId(notebook_id)
+        notebook_obj_id = ObjectId(notebookId)
     except InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid notebook_id format")
+        raise HTTPException(status_code=400, detail="Invalid notebookId format")
     now = datetime.now(timezone.utc)
     result = await notebook_collection.update_one(
         {"_id": notebook_obj_id},
@@ -78,7 +87,7 @@ async def update_notebook(notebook_id: str, upload: Notebook):
     )
 
     if result.modified_count == 1:
-        doc = await notebook_collection.find_one({"_id": ObjectId(notebook_id)})
+        doc = await notebook_collection.find_one({"_id": ObjectId(notebookId)})
         return Notebook(
             title=doc["title"],
             password=doc.get("password", ""),
@@ -91,9 +100,11 @@ async def update_notebook(notebook_id: str, upload: Notebook):
 
 
 # Delete a notebook
-@router.delete("/{notebook_id}")
-async def delete_notebook(notebook_id: str):
-    result = await notebook_collection.delete_one({"_id": ObjectId(notebook_id)})
+@router.delete("/{notebookId}")
+async def delete_notebook(notebookId: str):
+    result = await notebook_collection.delete_one({"_id": ObjectId(notebookId)})
+
+    # Delete file storage for notebook
     if result.deleted_count == 1:
         return {"status": True, "message": "Notebook deleted successfully"}
     else:
