@@ -1,28 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import ActionTrigger from '../ActionTrigger'
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import axios from 'axios'
-
-interface SourceFile {
-  id: string
-  title: string
-  format: string
-  file: File
-}
-
-const initialFiles: SourceFile[] = [
-  { id: crypto.randomUUID(), title: "Project Proposal", format: "pdf", file: new File(["Project Proposal content"], "Project Proposal.pdf", { type: "application/pdf" }) },
-  { id: crypto.randomUUID(), title: "Team Meeting Notes", format: "docx", file: new File(["Team Meeting Notes content"], "Team Meeting Notes.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }) },
-  { id: crypto.randomUUID(), title: "Product Roadmap", format: "pptx", file: new File(["Product Roadmap content"], "Product Roadmap.pptx", { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }) },
-  { id: crypto.randomUUID(), title: "Financial Report", format: "xlsx", file: new File(["Financial Report content"], "Financial Report.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }) },
-  { id: crypto.randomUUID(), title: "Research Summary", format: "txt", file: new File(["Research Summary content"], "Research Summary.txt", { type: "text/plain" }) },
-  { id: crypto.randomUUID(), title: "Marketing Plan", format: "md", file: new File(["Marketing Plan content"], "Marketing Plan.md", { type: "text/markdown" }) },
-]
+import { SingleFile } from '@/types/fileStorage.interface'
 
 const icons = [
   { format: 'pdf', source: '/icon/pdf.png'},
@@ -37,12 +22,34 @@ export default function SourceFileUpload() {
   const [actionOpen, setActionOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
-  const [files, setFiles] = useState<SourceFile[]>(initialFiles)
+  const [files, setFiles] = useState<SingleFile[]>([])
 
   const params = useParams<{ noteId: string, conversationId: string }>()
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/files/${params.noteId}`)
+        setFiles(res.data)
+      } catch (error) {
+        console.error("Failed to fetch files:", error);
+      }
+      
+    }
+    fetchData()
+  }, [])
   const handleAddFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-     
+    if (!e.target.files) return;
+    const formData = new FormData();
+    Array.from(e.target.files).forEach(file => formData.append("files", file))
+    try {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/files/upload_files/${params.noteId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })
+      console.log(res.data.upload_files)
+    } catch (err) {
+      console.log(err)
+    }
   }
 
 
@@ -51,11 +58,14 @@ export default function SourceFileUpload() {
   }
 
   const toggleSelectFile = (id: string) => {
-    
+    // setSelectedFiles(prev => 
+    //   prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+    // )
   }
 
   const toggleSelectAll = () => {
-    
+    // if (selectedFiles.length === files.length) setSelectedFiles([]) 
+    // else setSelectedFiles(files.map(f => f.id))
   }
 
   return (
@@ -82,20 +92,20 @@ export default function SourceFileUpload() {
       <div className="flex-1 overflow-y-auto space-y-1 p-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {files.map(file => (
           <div
-            key={file.id}
-            onClick={() => { setActionOpen(true); setSelectedId(file.id) }}
+            key={file.public_id}
+            onClick={() => { setActionOpen(true); setSelectedId(file.public_id) }}
             className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition ${
-              selectedId === file.id ? 'bg-gray-100' : 'hover:bg-gray-50'
+              selectedId === file.public_id ? 'bg-gray-100' : 'hover:bg-gray-50'
             }`}
           >
             <div className='w-5 h-5'>
-              {(actionOpen && file.id === selectedId)
-                ? <ActionTrigger className="text-gray-500 hover:bg-gray-200 rounded-full" apiLink={`files`} onDelete={handleDelete} id={file.id}/>
+              {(actionOpen && file.public_id === selectedId)
+                ? <ActionTrigger className="text-gray-500 hover:bg-gray-200 rounded-full" apiLink={`files`} onDelete={handleDelete} id={file.public_id}/>
                 : <img src={icons.find(icon => icon.format === file.format)?.source} alt="file icon" className="w-5 h-5 mr-2"/>}
             </div>
 
-            <span className="text-gray-700 text-sm">{file.title}</span>
-            <Checkbox className="cursor-pointer" checked={selectedFiles.includes(file.id)} onCheckedChange={() => toggleSelectFile(file.id)}/>
+            <span className="text-gray-700 text-sm">{file.filename}</span>
+            <Checkbox className="cursor-pointer" checked={selectedFiles.includes(file.public_id)} onCheckedChange={() => toggleSelectFile(file.public_id)}/>
           </div>
         ))}
       </div>

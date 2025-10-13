@@ -20,18 +20,18 @@ export default function HistoryConversation({conversations, setConversations} : 
   const router = useRouter()
   const params = useParams<{ noteId: string, conversationId: string }>()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const handleClick = (conversation_id: string) => {
-    setSelectedId(conversation_id)
-    router.replace(`/home/notebook/${params.noteId}/${conversation_id}`)
+  const handleClick = (conversationId: string) => {
+    setSelectedId(conversationId)
+    router.replace(`/home/notebook/${params.noteId}/${conversationId}`)
   }
 
   useEffect(() => {
-      setSelectedId(params.conversationId)
-      // If no conversationId in URL or it's "1", create a new conversation
-      if (!params.conversationId || params.conversationId === "1") {
-        createConversation()
-      }
-    }, [params.conversationId])
+    setSelectedId(params.conversationId)
+    // If no conversationId in URL or it's "1", create a new conversation
+    if (!params.conversationId || params.conversationId === "1") {
+      createConversation()
+    }
+  }, [params.conversationId])
 
   const createConversation = async () => {
     const resCon = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/conversations/create/${params.noteId}`, 

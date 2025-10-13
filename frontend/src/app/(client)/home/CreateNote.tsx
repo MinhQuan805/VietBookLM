@@ -114,13 +114,8 @@ function NoteForm() {
     setLoading(true)
     try {
       // Send POST request to create a new notebook
-      const resNote = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notebooks/create`, data)
-
-      const resCon = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/conversations/create/${resNote.data.notebookId}`, 
-        {},
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-      router.push(`/home/notebook/${resNote.data.notebookId}/${resCon.data.conversationId}`)
+      const resNote  = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notebooks/create`, data)
+      router.push(`/home/notebook/${resNote.data.notebookId}/${resNote.data.conversationId}`)
     } catch (err: any) {
       console.error(err)
       setError("Cannot create notebook. Please try again later.")
