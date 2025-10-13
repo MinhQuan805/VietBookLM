@@ -42,20 +42,7 @@ export default function SourceFileUpload() {
   const params = useParams<{ noteId: string, conversationId: string }>()
 
   const handleAddFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return
-    const formData = new FormData()
-    Array.from(e.target.files).forEach(file => formData.append("files", file))
-
-    try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/files/uploadFiles`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      })
-      console.log(res.data)
-    } catch (err) {
-      console.error(err)
-    }
+     
   }
 
 
@@ -64,14 +51,11 @@ export default function SourceFileUpload() {
   }
 
   const toggleSelectFile = (id: string) => {
-    setSelectedFiles(prev =>
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-    )
+    
   }
 
   const toggleSelectAll = () => {
-    if (selectedFiles.length === files.length) setSelectedFiles([])
-    else setSelectedFiles(files.map(f => f.id))
+    
   }
 
   return (
@@ -92,7 +76,7 @@ export default function SourceFileUpload() {
 
       <div className="flex justify-between items-center px-4 py-1 bg-white z-10">
         <span className="text-sm text-gray-700">Select all sources</span>
-        <Checkbox checked={selectedFiles.length === files.length} onCheckedChange={toggleSelectAll}/>
+        <Checkbox className="cursor-pointer" checked={selectedFiles.length === files.length} onCheckedChange={toggleSelectAll}/>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-1 p-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -111,7 +95,7 @@ export default function SourceFileUpload() {
             </div>
 
             <span className="text-gray-700 text-sm">{file.title}</span>
-            <Checkbox checked={selectedFiles.includes(file.id)} onCheckedChange={() => toggleSelectFile(file.id)}/>
+            <Checkbox className="cursor-pointer" checked={selectedFiles.includes(file.id)} onCheckedChange={() => toggleSelectFile(file.id)}/>
           </div>
         ))}
       </div>
